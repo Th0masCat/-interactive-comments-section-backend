@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-y7vyk(c^wkg6$p6fh^uqra9pxo13eq8q+l#f+hm3i8zzy2*9))'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -185,12 +185,15 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    'https://interactive-comments-section-frontend.vercel.app'
 ]
 
 import os
 
 # Actual directory user files go to
-MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'mediafiles')
+MEDIA_ROOT = BASE_DIR / 'mediafiles'
 
 # URL used to access the media
 MEDIA_URL = '/media/'
+
+STATIC_ROOT = BASE_DIR / 'productionfiles'
