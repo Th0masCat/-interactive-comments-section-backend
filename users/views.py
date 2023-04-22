@@ -55,13 +55,11 @@ class PostViewSet(APIView):
         return Response(serializer.errors)
     
     def delete(self, request, format=None):
-        print(request.data)
         posts = PostDetail.objects.get(id=request.data['id'])
         posts.delete()
         return Response(status=200)
     
     def put(self, request, format=None):
-        print(request.data)
         posts = PostDetail.objects.get(id=request.data['id'])
         posts.post_content = request.data['post_content']
         posts.save()
