@@ -6,6 +6,7 @@ class User(models.Model):
     name = models.CharField(max_length=32, primary_key=True, unique=True)
     email = models.EmailField(max_length=32, unique=True)
     user_image = models.ImageField(upload_to='user_images', blank=True, null=True)
+    password = models.CharField(max_length=32, default="password")
     
     def __str__(self):
         return self.name

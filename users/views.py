@@ -27,9 +27,12 @@ class UserViewSet(APIView):
     serializer_class = UserSerializer
     
     def get(self, request, format=None):
-        users = User.objects.all()
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+        if User.objects.filter(name=request.data['name']).exists() and User.objects.get(name=request.data['name']).password == request.data['password']:
+            users = User.objects.get(name=request.data['name'])
+            serializer = UserSerializer(users, many=False)
+            return Response(serializer.data)
+        else:    
+            return Response(status=404)
 
     def post(self, request, format=None):
         serializer = UserSerializer(data=request.data)
