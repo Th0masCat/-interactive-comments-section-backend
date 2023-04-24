@@ -25,16 +25,15 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 class UserViewSet(APIView):
     serializer_class = UserSerializer
-    
-    def get(self, request, format=None):
+
+    def post(self, request, format=None):
         if User.objects.filter(name=request.data['name']).exists() and User.objects.get(name=request.data['name']).password == request.data['password']:
             users = User.objects.get(name=request.data['name'])
             serializer = UserSerializer(users, many=False)
             return Response(serializer.data)
-        else:    
-            return Response(status=404)
-
-    def post(self, request, format=None):
+        elif User.objects.filter(name=request.data['name']).exists() and User.objects.get(name=request.data['name']).password != request.data['password']:
+            return Response(status=401)    
+                
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
