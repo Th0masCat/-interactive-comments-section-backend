@@ -14,10 +14,10 @@ class User(models.Model):
 
 class PostDetail(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+    parent_post = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
     time_when_posted = models.DateTimeField(auto_now_add=True) 
     post_content = models.TextField()
     likes = models.IntegerField(default=0)
     
     def __str__(self):
         return self.post_content
-    

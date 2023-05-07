@@ -63,7 +63,16 @@ class PostViewSet(APIView):
     
     def put(self, request, format=None):
         posts = PostDetail.objects.get(id=request.data['id'])
-        posts.post_content = request.data['post_content']
+        
+        
+        if(request.data['likes'] != None):        
+            posts.likes = request.data['likes']
+            posts.save()
+            return Response(status=200)
+        else:
+            posts.post_content = request.data['post_content']
+        
+        
         posts.save()
         return Response(status=200)
     
