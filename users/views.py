@@ -42,7 +42,7 @@ def buildForest(data, posts):
                 'data':{
                 'id': posts.get(id=value).id,
                 'username': posts.get(id=value).username.name,
-                'time_when_posted': posts.get(id=value).time_when_posted.strftime("%Y-%m-%d %H:%M:%S"),
+                'time_when_posted': posts.get(id=value).time_when_posted,
                 'post_content': posts.get(id=value).post_content,
                 'likes': posts.get(id=value).likes,
                 'parent_post': posts.get(id=value).parent_post.id if posts.get(id=value).parent_post else None,
@@ -56,9 +56,12 @@ def buildForest(data, posts):
     for key, children in data.items():
         node = nodes[int(key)]
         node['children'] = [nodes[child] for child in children]
+        node['children'] = sorted(node['children'], key=lambda k: k['data']['time_when_posted'], reverse=True)
 
         if not any(node['value'] in lst for lst in data.values()):
             roots.append(node)
+    
+    roots = sorted(roots, key=lambda k: k['data']['time_when_posted'], reverse=True)
 
     return roots
 
@@ -67,6 +70,8 @@ def refresh_tree():
     posts = PostDetail.objects.all()
     tree = create_comment_tree(posts)
     forest = buildForest(tree, posts)
+    
+    forest = sorted(forest, key=lambda k: k['data']['time_when_posted'], reverse=True)
     
     return forest
 
