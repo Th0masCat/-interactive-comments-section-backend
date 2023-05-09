@@ -1,27 +1,9 @@
 from .serializers import PostSerializer, UserSerializer
 from rest_framework.views import APIView
 from .models import PostDetail, User
+from django.http import JsonResponse
 
 from rest_framework.response import Response
-
-# Create your views here.
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
-
-class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token['username'] = user.username
-        # ...
-
-        return token
-    
-class MyTokenObtainPairView(TokenObtainPairView):
-    serializer_class = MyTokenObtainPairSerializer
-
 
 class UserViewSet(APIView):
     serializer_class = UserSerializer
@@ -41,36 +23,78 @@ class UserViewSet(APIView):
         return Response(serializer.errors)
     
     
+def create_comment_tree(posts):
+    tree = {}
+    for post in posts:
+        tree[post.id] = []
+        if post.parent_post:
+            tree[post.parent_post.id].append(post.id)
+            
+    return tree
+
+def buildForest(data, posts):
+    nodes = {}
+    roots = []
+
+    for key in data.keys():
+        value = int(key)
+        nodes[value] = {'value': value, 
+                'data':{
+                'id': posts.get(id=value).id,
+                'username': posts.get(id=value).username.name,
+                'time_when_posted': posts.get(id=value).time_when_posted.strftime("%Y-%m-%d %H:%M:%S"),
+                'post_content': posts.get(id=value).post_content,
+                'likes': posts.get(id=value).likes,
+                'parent_post': posts.get(id=value).parent_post.id if posts.get(id=value).parent_post else None,
+                'user_details': {
+                    'name': posts.get(id=value).username.name,
+                    'user_image': posts.get(id=value).username.user_image.url if posts.get(id=value).username.user_image else None,
+                    'email': posts.get(id=value).username.email
+                }
+            }, 'children': []}
+
+    for key, children in data.items():
+        node = nodes[int(key)]
+        node['children'] = [nodes[child] for child in children]
+
+        if not any(node['value'] in lst for lst in data.values()):
+            roots.append(node)
+
+    return roots
+
+
+def refresh_tree():
+    posts = PostDetail.objects.all()
+    tree = create_comment_tree(posts)
+    forest = buildForest(tree, posts)
+    
+    return forest
+
+forest = refresh_tree()
+
 class PostViewSet(APIView):
     serializer_class = PostSerializer
     
     def get(self, request, format=None):
-        posts = PostDetail.objects.all()
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
+        forest = refresh_tree()
+        return JsonResponse(forest, safe=False)
     
     def post(self, request, format=None):
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(status=200)
         return Response(serializer.errors)
     
     def delete(self, request, format=None):
         posts = PostDetail.objects.get(id=request.data['id'])
         posts.delete()
+        
         return Response(status=200)
     
     def put(self, request, format=None):
         posts = PostDetail.objects.get(id=request.data['id'])
-        
-        if(request.data['likes'] != None):        
-            posts.likes = request.data['likes']
-            posts.save()
-            return Response(status=200)
-        else:
-            posts.post_content = request.data['post_content']
-        
+        posts.post_content = request.data['post_content']
         
         posts.save()
         return Response(status=200)

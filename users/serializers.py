@@ -13,3 +13,4 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostDetail
         fields = ['id' , 'username' ,'user_details', 'time_when_posted', 'post_content', 'likes', 'parent_post']
+        
