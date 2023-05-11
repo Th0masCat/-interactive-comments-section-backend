@@ -1,30 +1,40 @@
-from .serializers import PostSerializer, UserSerializer
+from .serializers import PostSerializer
 from rest_framework.views import APIView
 from .models import PostDetail, User
 from django.http import JsonResponse
 
 from rest_framework.response import Response
 
+from .serializers import UserSerializer, RegisterSerializer
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import generics
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = RegisterSerializer
+    
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=400)
+
 class UserViewSet(APIView):
     serializer_class = UserSerializer
     
-    def post(self, request, format=None):
+    def post(self, request):
         if User.objects.filter(name=request.data['name']).exists() and User.objects.get(name=request.data['name']).password == request.data['password']:
             users = User.objects.get(name=request.data['name'])
             serializer = UserSerializer(users, many=False)
             return Response(serializer.data)
         elif User.objects.filter(name=request.data['name']).exists() and User.objects.get(name=request.data['name']).password != request.data['password']:
-            return Response({'error': 'Wrong password'}, status=400)
+            return Response(status=400)    
 
-        if request.data['email'] != '':
-            serializer = UserSerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data)
-            return Response(serializer.errors)
-        
-        return Response({'error': 'Email cannot be empty'}, status=400)
-    
+        return Response('User does not exist', status=400)
     
 def create_comment_tree(posts):
     tree = {}
